@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
   sensus:
-    build: .
     image: ghcr.io/flaviosantti/sensus:latest
     container_name: sensus_app
     restart: unless-stopped
