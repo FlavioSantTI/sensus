@@ -197,16 +197,20 @@
         function getSupabase() {
             if (supabaseClient) return supabaseClient;
 
+            // Garantir que espaços em branco não quebrem a chave
+            const url = SUPABASE_URL.trim();
+            const key = SUPABASE_ANON_KEY.trim();
+
             console.log('--- CONEXÃO SUPABASE ---');
-            if (SUPABASE_URL.includes('PLACEHOLDER')) {
+            if (url.includes('PLACEHOLDER')) {
                 console.error('❌ ERRO: Chaves do banco não foram injetadas no deploy!');
                 return null;
             }
 
             try {
                 if (window.supabase) {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    console.log('✅ Cliente Supabase inicializado.');
+                    supabaseClient = window.supabase.createClient(url, key);
+                    console.log('✅ Cliente Supabase inicializado (URL ok).');
                     return supabaseClient;
                 }
             } catch (e) {
