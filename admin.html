@@ -213,10 +213,33 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER';
-        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
+        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER'.includes('PLACEHOLDER')
+            ? 'https://xdxdafpzfojvbugalqns.supabase.co'
+            : 'VITE_SUPABASE_URL_PLACEHOLDER';
 
-        const supabaseAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER'.includes('PLACEHOLDER')
+            ? ('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+                'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkeGRhZnB6Zm9qdmJ1Z2FscW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDU3NTcsImV4cCI6MjA4MzM4MTc1N30.' +
+                'CcwLwXvlkraG7aLUmyN0xIDDyo5M3Dm5xQYFw35NTgU')
+            : 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
+
+        let supabaseAdmin = null;
+        function getSupabaseAdmin() {
+            if (supabaseAdmin) return supabaseAdmin;
+
+            const url = SUPABASE_URL.trim();
+            const key = SUPABASE_ANON_KEY.trim();
+
+            try {
+                if (window.supabase) {
+                    supabaseAdmin = window.supabase.createClient(url, key);
+                    return supabaseAdmin;
+                }
+            } catch (e) {
+                console.error('❌ Erro na inicialização do Admin:', e);
+            }
+            return null;
+        }
 
         const PERGUNTAS = {
             1: 'Como você gosta de ser chamado(a)?',
@@ -249,12 +272,12 @@
                 console.log('Supabase URL:', SUPABASE_URL);
                 console.log('Supabase Client:', supabaseAdmin);
 
-                // Verificar se Supabase foi inicializado
-                if (!supabaseAdmin) {
-                    throw new Error('Supabase client não foi inicializado');
+                const client = getSupabaseAdmin();
+                if (!client) {
+                    throw new Error('Supabase client não foi inicializado (verifique as chaves)');
                 }
 
-                const { data, error } = await supabaseAdmin
+                const { data, error } = await client
                     .from('anamnese_humanizada')
                     .select('*')
                     .order('created_at', { ascending: false });

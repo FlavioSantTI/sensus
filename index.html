@@ -190,27 +190,30 @@
 
     <script>
         // --- CONFIGURATION ---
-        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER';
-        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
+        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER'.includes('PLACEHOLDER')
+            ? 'https://xdxdafpzfojvbugalqns.supabase.co'
+            : 'VITE_SUPABASE_URL_PLACEHOLDER';
+
+        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER'.includes('PLACEHOLDER')
+            ? ('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+                'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkeGRhZnB6Zm9qdmJ1Z2FscW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDU3NTcsImV4cCI6MjA4MzM4MTc1N30.' +
+                'CcwLwXvlkraG7aLUmyN0xIDDyo5M3Dm5xQYFw35NTgU')
+            : 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
 
         let supabaseClient = null;
         function getSupabase() {
             if (supabaseClient) return supabaseClient;
 
-            // Garantir que espaços em branco não quebrem a chave
             const url = SUPABASE_URL.trim();
             const key = SUPABASE_ANON_KEY.trim();
 
             console.log('--- CONEXÃO SUPABASE ---');
-            if (url.includes('PLACEHOLDER')) {
-                console.error('❌ ERRO: Chaves do banco não foram injetadas no deploy!');
-                return null;
-            }
+            console.log('URL:', url);
 
             try {
                 if (window.supabase) {
                     supabaseClient = window.supabase.createClient(url, key);
-                    console.log('✅ Cliente Supabase inicializado (URL ok).');
+                    console.log('✅ Cliente Supabase inicializado.');
                     return supabaseClient;
                 }
             } catch (e) {
