@@ -403,49 +403,60 @@
         }
 
         function openModal(id) {
+            console.log('Abrindo modal para ID:', id);
             const record = allRecords.find(r => r.id === id);
-            if (!record) return;
+            if (!record) {
+                console.error('Registro não encontrado para ID:', id);
+                return;
+            }
 
-            document.getElementById('modal-nome').textContent = record.paciente_nome;
+            document.getElementById('modal-nome').textContent = record.paciente_nome || 'Sem Nome';
             document.getElementById('modal-info').textContent =
-                `${new Date(record.created_at).toLocaleString('pt-BR')} • ${record.unidade} • Dr(a). ${record.dentista_nome || 'N/A'}`;
+                `${new Date(record.created_at).toLocaleString('pt-BR')} • ${record.unidade || 'N/A'} • Dr(a). ${record.dentista_nome || 'N/A'}`;
 
             const body = document.getElementById('modal-body');
 
             // Informações do atendimento
             let html = `
                 <div class="bg-slate-50 p-4 rounded-lg mb-6">
-                    <h3 class="font-semibold text-gray-700 mb-2">Informações do Atendimento</h3>
+                    <h3 class="font-semibold text-gray-700 mb-2 font-title">Informações do Atendimento</h3>
                     <p class="text-sm text-gray-600"><strong>Unidade:</strong> ${record.unidade || 'N/A'}</p>
                     <p class="text-sm text-gray-600"><strong>Dentista:</strong> ${record.dentista_nome || 'N/A'}</p>
-                    <p class="text-sm text-gray-600"><strong>ID Profissional:</strong> ${record.profissional_id || 'N/A'}</p>
+                    <p class="text-sm text-gray-600"><strong>Origem:</strong> ${record.fluxo_origem || 'Tablet Recepção'}</p>
                 </div>
-                <h3 class="font-semibold text-gray-700 mb-4">Diagnóstico de Sensações</h3>
+                <h3 class="font-semibold text-gray-700 mb-4 font-title">Diagnóstico de Sensações</h3>
             `;
 
             // Adicionar respostas
-            html += Object.entries(record.respostas || {}).map(([key, value]) => {
-                const pergunta = PERGUNTAS[key] || `Pergunta ${key}`;
+            const respostas = record.respostas || {};
+            html += Object.entries(PERGUNTAS).map(([key, pergunta]) => {
+                const resposta = respostas[key];
                 return `
                     <div class="border-l-4 border-turquoise pl-4 mb-6">
                         <p class="text-sm font-semibold text-gray-600 mb-1">${key}. ${pergunta}</p>
-                        <p class="text-base text-gray-800">${value || '(Não respondido)'}</p>
+                        <p class="text-base text-gray-800">${resposta || '<span class="text-gray-400 italic">(Não respondido)</span>'}</p>
                     </div>
                 `;
             }).join('');
 
             body.innerHTML = html;
 
-            document.getElementById('modal').classList.add('active');
+            const modal = document.getElementById('modal');
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            console.log('✅ Modal exibido!');
         }
 
         function closeModal() {
-            document.getElementById('modal').classList.remove('active');
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
         }
 
         async function marcarLido(id) {
             try {
-                const { error } = await supabaseAdmin
+                const client = getSupabaseAdmin();
+                const { error } = await client
                     .from('anamnese_humanizada')
                     .update({ lido_pelo_dentista: true })
                     .eq('id', id);
