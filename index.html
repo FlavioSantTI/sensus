@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sensus | Diagnóstico de Perspectivas - Bertuol Odontologia</title>
+
+    <!-- SEO & Meta Tags -->
+    <meta name="description"
+        content="Sensus - Sistema de mapeamento emocional e diagnóstico de sensações. Bertuol Odontologia.">
+    <meta name="theme-color" content="#f8fafc">
+    <link rel="icon" href="https://bertuolodontologia.com.br/favicon.ico">
+
+    <!-- Fonts: Poppins & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'turquoise': '#2BBEC3',
+                        'bertuol-yellow': '#ECC236',
+                    },
+                    borderRadius: {
+                        '4xl': '2.5rem',
+                        '3xl-custom': '3rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8fafc;
+            touch-action: manipulation;
+        }
+
+        .fade-transition {
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        .fade-out {
+            opacity: 0;
+        }
+
+        .fade-in {
+            opacity: 1;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(43, 190, 195, 0.2);
+            border-color: #2BBEC3;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .btn-active:active {
+            transform: scale(0.98);
+        }
+
+        .option-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transition-property: all;
+        }
+
+        .option-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .option-card.selected {
+            border-color: #ECC236 !important;
+            background-color: #ECC236 !important;
+            color: white !important;
+        }
+
+        .option-card.selected span {
+            color: white !important;
+        }
+
+        /* Efeito de Escala e Elevação para botão Próximo */
+        #btn-next {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(43, 190, 195, 0.2);
+        }
+
+        #btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(43, 190, 195, 0.3);
+            filter: brightness(1.1);
+        }
+
+        #btn-next:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 4px rgba(43, 190, 195, 0.2);
+        }
+
+        /* Efeito de Escala e Elevação para botão Anterior */
+        #btn-prev {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(43, 190, 195, 0.2);
+        }
+
+        #btn-prev:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(43, 190, 195, 0.3);
+            filter: brightness(1.1);
+        }
+
+        #btn-prev:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 4px rgba(43, 190, 195, 0.2);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center p-4 md:p-8">
+
+    <!-- Main Card -->
+    <main id="app-card"
+        class="bg-white rounded-[3rem] shadow-2xl shadow-turquoise/10 w-full max-w-2xl h-full max-h-[750px] md:max-h-[700px] lg:max-h-[750px] relative flex flex-col overflow-hidden">
+
+        <!-- Header / Logo -->
+        <header class="pt-6 px-6 flex justify-center flex-shrink-0">
+            <img src="/logo-bertuol.png" alt="Bertuol Odontologia" class="max-h-20">
+        </header>
+
+        <!-- Content Area -->
+        <section id="step-container"
+            class="flex-grow flex flex-col justify-center px-6 py-4 overflow-y-auto no-scrollbar">
+            <div id="step-content" class="fade-transition fade-in">
+                <!-- Content will be injected here via JS -->
+            </div>
+        </section>
+
+        <!-- Footer / Navigation & Progress -->
+        <footer class="p-6 flex-shrink-0">
+            <div id="navigation-controls" class="flex justify-between items-center mb-4 gap-4">
+                <button id="btn-prev"
+                    class="px-8 py-3 text-sm bg-turquoise text-white font-semibold rounded-xl shadow-lg shadow-turquoise/30 hover:bg-turquoise/90 transition-all btn-active invisible">
+                    Anterior
+                </button>
+                <button id="btn-next"
+                    class="px-8 py-3 text-sm bg-turquoise text-white font-semibold rounded-xl shadow-lg shadow-turquoise/30 hover:bg-turquoise/90 transition-all btn-active">
+                    Começar
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progress-wrapper" class="hidden">
+                <div class="flex justify-between text-xs text-slate-400 mb-2 font-medium">
+                    <span id="progress-text">Pergunta 1 de 15</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-turquoise w-0 transition-all duration-500 ease-in-out">
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER';
+        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
+
+        let supabaseClient = null;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.error('Erro ao inicializar Supabase:', e);
+        }
+
+        // --- PROFISSIONAIS DATA ---
+        let profissionaisData = [];
+        let unidadesDisponiveis = [];
+
+        // --- STATE ---
+        let currentStep = -2; // -2: Seleção Unidade/Dentista, -1: Welcome, 0-14: Questions, 15: Review, 16: Success
+        const totalQuestions = 15;
+        const answers = {
+            paciente_nome: '',
+            unidade: '',
+            dentista_nome: '',
+            profissional_id: null,
+            respostas: {},
+            fluxo_origem: 'Tablet Recepção'
+        };
+
+        // Função para buscar profissionais
+        async function loadProfissionais() {
+            try {
+                console.log('Buscando profissionais...');
+                const { data, error } = await supabaseClient
+                    .from('profissionais')
+                    .select('*')
+                    .eq('Status', true)
+                    .order('Unidade', { ascending: true });
+
+                if (error) {
+                    console.error('Erro ao buscar profissionais:', error);
+                    return;
+                }
+
+                profissionaisData = data || [];
+                console.log('Profissionais carregados:', profissionaisData.length);
+                console.log('Primeiro profissional (estrutura completa):', JSON.stringify(profissionaisData[0], null, 2));
+
+                // Obter unidades únicas
+                unidadesDisponiveis = [...new Set(profissionaisData.map(p => p.Unidade))];
+                console.log('Unidades disponíveis:', unidadesDisponiveis);
+
+            } catch (e) {
+                console.error('Exceção ao carregar profissionais:', e);
+            }
+        }
+
+        const questions = [
+            { id: 1, type: 'text', q: 'Como você gosta de ser chamado(a)?', key: 'paciente_nome', placeholder: 'Seu nome ou apelido...' },
+            {
+                id: 2,
+                type: 'choice',
+                q: 'O que fez você escolher a Bertuol?',
+                options: ['Indicação', 'Redes Sociais', 'Conexão com a Marca', 'Curiosidade']
+            },
+            { id: 3, type: 'textarea', q: 'Se seu sorriso contasse uma história hoje, o que ele diria?' },
+            {
+                id: 4,
+                type: 'choice',
+                q: 'Como você se sente em ambientes de saúde?',
+                options: ['Tranquilo(a)', 'Tenso(a)', 'Curioso(a)', 'Inseguro(a)', 'Confiante']
+            },
+            { id: 5, type: 'textarea', q: 'Existe alguma experiência do passado que influencia como você se sente hoje?' },
+            { id: 6, type: 'textarea', q: 'O que te faria sair daqui hoje se sentindo cuidado(a) de verdade?' },
+            { id: 7, type: 'textarea', q: 'O que mais te dá orgulho em você?' },
+            { id: 8, type: 'textarea', q: 'Quando você imagina seu sorriso ideal, o que muda na sua vida?' },
+            {
+                id: 9,
+                type: 'choice',
+                q: 'O que te deixa mais confortável no atendimento?',
+                options: ['Música ambiente', 'Silêncio', 'Explicações detalhadas', 'Pausas quando necessário', 'Conversa leve']
+            },
+            { id: 10, type: 'textarea', q: 'Como é um dia bom para você?' },
+            { id: 11, type: 'text', q: 'O que você gosta de fazer para se sentir bem?', placeholder: 'Atividade, hobby...' },
+            { id: 12, type: 'text', q: 'Se pudéssemos escolher uma música para tocar agora, qual seria?', placeholder: 'Nome da música ou artista...' },
+            {
+                id: 13,
+                type: 'choice',
+                q: 'O que mais te deixa inseguro(a) em tratamentos de saúde?',
+                options: ['Dor', 'Custo', 'Tempo de tratamento', 'Resultado estético']
+            },
+            {
+                id: 14,
+                type: 'choice',
+                q: 'Como prefere que a gente se comunique com você?',
+                options: ['Explicações detalhadas', 'Direto ao ponto', 'Visual/Fotos', 'Mensagens e textos']
+            },
+            { id: 15, type: 'textarea', q: 'Algo que quase ninguém pergunta, mas que você gostaria que soubéssemos?' }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const contentDiv = document.getElementById('step-content');
+        const btnNext = document.getElementById('btn-next');
+        const btnPrev = document.getElementById('btn-prev');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressWrapper = document.getElementById('progress-wrapper');
+
+        // --- FUNCTIONS ---
+        function renderStep() {
+            // Fade out
+            contentDiv.classList.remove('fade-in');
+            contentDiv.classList.add('fade-out');
+
+            setTimeout(() => {
+                if (currentStep === -2) {
+                    renderSelecaoProfissional();
+                } else if (currentStep === -1) {
+                    renderWelcome();
+                } else if (currentStep === questions.length) {
+                    renderReview();
+                } else if (currentStep > questions.length) {
+                    renderSuccess();
+                } else {
+                    renderQuestion(questions[currentStep]);
+                }
+
+                // Fade in
+                contentDiv.classList.remove('fade-out');
+                contentDiv.classList.add('fade-in');
+            }, 200);
+        }
+
+        function renderSelecaoProfissional() {
+            // Filtrar dentistas pela unidade selecionada
+            const dentistasDisponiveis = answers.unidade
+                ? profissionaisData.filter(p => p.Unidade === answers.unidade)
+                : [];
+
+            contentDiv.innerHTML = `
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2 tracking-tight font-title">Informações do Atendimento</h2>
+                    <p class="text-slate-500 text-base">Selecione a unidade e o profissional que irá atendê-lo(a)</p>
+                </div>
+
+                <div class="space-y-6 max-w-md mx-auto">
+                    <!-- Unidade -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Unidade <span class="text-red-500">*</span>
+                        </label>
+                        <select id="select-unidade" 
+                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-turquoise focus:outline-none transition-colors">
+                            <option value="">Selecione a unidade</option>
+                            ${unidadesDisponiveis.map(u => `
+                                <option value="${u}" ${answers.unidade === u ? 'selected' : ''}>${u}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <!-- Dentista -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Dentista <span class="text-red-500">*</span>
+                        </label>
+                        <select id="select-dentista" 
+                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-turquoise focus:outline-none transition-colors"
+                                ${!answers.unidade ? 'disabled' : ''}>
+                            <option value="">Selecione o dentista</option>
+                            ${dentistasDisponiveis.map(d => `
+                                <option value="${d.id}" ${answers.profissional_id === d.id ? 'selected' : ''}>${d.Nome}</option>
+                            `).join('')}
+                        </select>
+                        ${!answers.unidade ? '<p class="text-xs text-slate-400 mt-1">Selecione uma unidade primeiro</p>' : ''}
+                    </div>
+                </div>
+            `;
+
+            // Adicionar event listeners APÓS renderização
+            console.log('Dentistas disponíveis:', dentistasDisponiveis);
+
+            setTimeout(() => {
+                const selectUnidade = document.getElementById('select-unidade');
+                const selectDentista = document.getElementById('select-dentista');
+
+                console.log('Select Dentista element:', selectDentista);
+                if (selectDentista) {
+                    console.log('Options do select:', Array.from(selectDentista.options).map(o => ({ val: o.value, txt: o.text })));
+                }
+
+                if (selectUnidade) {
+                    selectUnidade.addEventListener('change', (e) => {
+                        console.log('Unidade mudou para:', e.target.value);
+                        handleUnidadeChange(e.target.value);
+                    });
+                }
+
+                if (selectDentista) {
+                    selectDentista.addEventListener('change', (e) => {
+                        console.log('=== SELECT DENTISTA MUDOU ===');
+                        console.log('Event:', e);
+                        console.log('Target:', e.target);
+                        console.log('Value:', e.target.value);
+                        console.log('Selected index:', e.target.selectedIndex);
+                        const selectedOption = e.target.options[e.target.selectedIndex];
+                        console.log('Selected option:', selectedOption);
+                        console.log('Selected option value:', selectedOption?.value);
+                        handleDentistaChange(e.target.value);
+                    });
+                }
+            }, 100);
+
+            // Configurar botões
+            btnNext.innerText = 'Iniciar';
+            btnNext.disabled = !answers.unidade || !answers.profissional_id;
+            btnNext.style.opacity = btnNext.disabled ? '0.5' : '1';
+            btnPrev.classList.add('hidden');
+            progressWrapper.classList.add('hidden');
+
+            // Centralizar o botão
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'center';
+
+            console.log('Tela de seleção renderizada');
+            console.log('Unidade selecionada:', answers.unidade);
+            console.log('Profissional ID:', answers.profissional_id);
+            console.log('Dentista nome:', answers.dentista_nome);
+            console.log('Botão habilitado:', !btnNext.disabled);
+        }
+
+        function handleUnidadeChange(unidade) {
+            answers.unidade = unidade;
+            answers.dentista_nome = '';
+            answers.profissional_id = null;
+            renderStep(); // Re-render para atualizar lista de dentistas
+        }
+
+        function handleDentistaChange(profissionalId) {
+            console.log('handleDentistaChange chamado com ID:', profissionalId);
+            const id = parseInt(profissionalId);
+            const profissional = profissionaisData.find(p => p.id === id);
+
+            console.log('Profissional encontrado:', profissional);
+
+            if (profissional) {
+                answers.profissional_id = profissional.id;
+                answers.dentista_nome = profissional.Nome;
+                btnNext.disabled = false;
+                btnNext.style.opacity = '1';
+                console.log('✅ Profissional selecionado:', profissional.Nome);
+            } else {
+                answers.profissional_id = null;
+                answers.dentista_nome = '';
+                btnNext.disabled = true;
+                btnNext.style.opacity = '0.5';
+                console.log('❌ Profissional não encontrado');
+            }
+        }
+
+        function renderWelcome() {
+            contentDiv.innerHTML = `
+                <div class="text-center">
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-3 tracking-tight font-title">Bem-vindo(a) ao Sensus</h1>
+                    <p class="text-slate-500 leading-relaxed text-base md:text-lg max-w-xl mx-auto">Preparamos este momento para conhecer suas sensações e perspectivas. Sente-se confortavelmente, respire fundo e vamos mapear juntos como você se sente.</p>
+                </div>
+            `;
+            btnNext.innerText = 'Começar Experiência';
+
+            // Mostrar botão Anterior para voltar à seleção de profissionais
+            btnPrev.classList.remove('invisible');
+            btnPrev.classList.remove('hidden');
+            btnPrev.innerText = 'Voltar';
+            btnPrev.onclick = null; // Reset to use event listener
+
+            // Resetar layout para space-between
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'space-between';
+
+            progressWrapper.classList.add('hidden');
+        }
+
+        function renderQuestion(question) {
+            // Update progress
+            const qNum = currentStep + 1;
+            const percent = Math.round((qNum / totalQuestions) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressText.innerText = `Pergunta ${qNum} de ${totalQuestions}`;
+            progressPercent.innerText = `${percent}%`;
+            progressWrapper.classList.remove('hidden');
+
+            // Resetar layout dos botões
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'space-between';
+
+            // Navigation buttons - Anterior sempre visível
+            btnPrev.classList.remove('invisible');
+            btnPrev.classList.remove('hidden');
+            btnPrev.innerText = 'Anterior';
+            btnPrev.onclick = null; // Reset to use event listener
+
+            // Garantir que botão Próximo esteja visível
+            btnNext.classList.remove('hidden');
+            btnNext.innerText = (currentStep === questions.length - 1) ? 'Finalizar' : 'Próximo';
+
+            if (question.type === 'choice') {
+                renderChoiceQuestion(question);
+            } else if (question.type === 'text') {
+                renderTextQuestion(question);
+            } else if (question.type === 'textarea') {
+                renderTextareaQuestion(question);
+            }
+        }
+
+        function renderChoiceQuestion(question) {
+            const selected = answers.respostas[question.id] || '';
+            contentDiv.innerHTML = `
+                <div class="space-y-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight font-title">${question.q}</h2>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        ${question.options.map(option => `
+                            <div class="option-card p-4 border-2 ${selected === option ? 'border-bertuol-yellow bg-bertuol-yellow' : 'border-slate-100'} rounded-2xl flex items-center justify-between" 
+                                 onclick="selectOption(${question.id}, '${option}')">
+                                <span class="text-base font-medium ${selected === option ? 'text-white' : 'text-slate-700'}">${option}</span>
+                                <div class="w-5 h-5 rounded-full border-2 ${selected === option ? 'border-white bg-white' : 'border-slate-200'} flex items-center justify-center flex-shrink-0">
+                                    ${selected === option ? '<div class="w-2 h-2 rounded-full bg-bertuol-yellow"></div>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectOption(questionId, option) {
+            answers.respostas[questionId] = option;
+            renderStep();
+        }
+
+        function renderTextQuestion(question) {
+            const val = question.key ? answers[question.key] : (answers.respostas[question.id] || '');
+            contentDiv.innerHTML = `
+                <div class="space-y-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight font-title">${question.q}</h2>
+                    <input type="text" id="step-input" 
+                        class="w-full p-4 text-lg bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-turquoise focus:ring-2 focus:ring-turquoise/20 transition-all" 
+                        placeholder="${question.placeholder || 'Sua resposta aqui...'}"
+                        value="${val}"
+                        oninput="saveState(${question.id}, '${question.key || ''}', this.value)">
+                </div>
+            `;
+            setTimeout(() => document.getElementById('step-input').focus(), 300);
+        }
+
+        function renderTextareaQuestion(question) {
+            const val = answers.respostas[question.id] || '';
+            contentDiv.innerHTML = `
+                <div class="space-y-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight font-title">${question.q}</h2>
+                    <textarea id="step-input" 
+                        class="w-full p-4 text-lg bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-turquoise focus:ring-2 focus:ring-turquoise/20 transition-all h-32 no-scrollbar resize-none" 
+                        placeholder="Fique à vontade para compartilhar..."
+                        oninput="saveState(${question.id}, '', this.value)">${val}</textarea>
+                </div>
+            `;
+            setTimeout(() => document.getElementById('step-input').focus(), 300);
+        }
+
+        function saveState(questionId, key, value) {
+            if (key) {
+                answers[key] = value;
+            } else {
+                answers.respostas[questionId] = value;
+            }
+        }
+
+        function renderReview() {
+            // Informações básicas
+            const infoHTML = `
+                <div class="bg-turquoise/10 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-slate-700"><strong>Nome:</strong> ${answers.paciente_nome || 'N/A'}</p>
+                    <p class="text-sm text-slate-700"><strong>Unidade:</strong> ${answers.unidade || 'N/A'}</p>
+                    <p class="text-sm text-slate-700"><strong>Dentista:</strong> ${answers.dentista_nome || 'N/A'}</p>
+                </div>
+            `;
+
+            // Montar lista de respostas
+            let respostasHTML = '';
+
+            // Pegar todas as respostas do objeto respostas
+            Object.keys(answers.respostas).forEach(questionId => {
+                const valor = answers.respostas[questionId];
+                const question = questions.find(q => q.id === parseInt(questionId));
+
+                if (question && valor) {
+                    respostasHTML += `
+                        <div class="bg-slate-50 p-4 rounded-lg mb-3 text-left border-l-4 border-turquoise">
+                            <p class="text-xs font-semibold text-turquoise mb-1">Pergunta ${question.id}</p>
+                            <p class="text-sm text-slate-600 mb-2">${question.q}</p>
+                            <p class="text-base text-slate-800 font-medium">${valor}</p>
+                        </div>
+                    `;
+                }
+            });
+
+            contentDiv.innerHTML = `
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2 tracking-tight font-title">Revise suas respostas</h2>
+                    <p class="text-slate-500 text-base">Confira se está tudo correto antes de enviar</p>
+                </div>
+
+                ${infoHTML}
+
+                <div class="max-w-2xl mx-auto mb-6 max-h-80 overflow-y-auto px-2">
+                    ${respostasHTML || '<p class="text-center text-slate-400">Nenhuma resposta registrada</p>'}
+                </div>
+
+                <div class="text-center space-y-3 mt-6">
+                    <p class="text-slate-600 font-semibold">Deseja revisar alguma resposta?</p>
+                    <div class="flex gap-3 justify-center flex-wrap">
+                        <button id="btn-revisar" 
+                                class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors">
+                            📝 Voltar e Revisar
+                        </button>
+                        <button id="btn-confirmar" 
+                                class="px-6 py-3 bg-turquoise text-white rounded-xl font-semibold hover:bg-[#218e8d] transition-all shadow-lg hover:shadow-xl">
+                            ✅ Confirmar e Enviar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Adicionar event listeners aos botões
+            setTimeout(() => {
+                document.getElementById('btn-revisar')?.addEventListener('click', () => {
+                    currentStep = 0;
+                    renderStep();
+                });
+
+                document.getElementById('btn-confirmar')?.addEventListener('click', () => {
+                    submitData();
+                });
+            }, 100);
+
+            // Configurar botões de navegação
+            btnNext.classList.add('hidden');
+            btnPrev.classList.add('hidden'); // Esconder botão Voltar
+            progressWrapper.classList.add('hidden');
+
+            // Centralizar área de conteúdo
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'center';
+        }
+
+
+        function renderSuccess() {
+            contentDiv.innerHTML = `
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-3 tracking-tight font-title">Obrigado por compartilhar!</h2>
+                <p class="text-slate-500 leading-relaxed text-base md:text-lg mb-6 max-w-xl mx-auto">Suas perspectivas e sensações vão nos ajudar a preparar um atendimento ainda mais especial para você.</p>
+                <p class="text-turquoise font-semibold text-base">Aguarde um instante, logo chamaremos você ✨</p>
+            </div>
+            `;
+            btnNext.classList.add('hidden');
+            btnPrev.classList.remove('hidden');
+            btnPrev.classList.remove('invisible');
+            btnPrev.innerText = 'Sair';
+            btnPrev.onclick = () => location.reload();
+            progressWrapper.classList.add('hidden');
+
+            // Centralizar o botão Sair
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'center';
+
+            // Auto reload after 15 seconds
+            setTimeout(() => location.reload(), 15000);
+        }
+
+        async function submitData() {
+            btnNext.disabled = true;
+            btnNext.innerText = 'Enviando...';
+
+            try {
+                if (!supabaseClient) throw new Error('Supabase não inicializado');
+
+                const { data, error } = await supabaseClient
+                    .from('anamnese_humanizada')
+                    .insert([{
+                        paciente_nome: answers.paciente_nome,
+                        unidade: answers.unidade,
+                        dentista_nome: answers.dentista_nome,
+                        profissional_id: answers.profissional_id,
+                        respostas: answers.respostas,
+                        fluxo_origem: answers.fluxo_origem
+                    }]);
+
+                if (error) throw error;
+
+                console.log('✅ Dados salvos com sucesso!');
+                currentStep++;
+                renderStep();
+            } catch (err) {
+                console.error('❌ Erro ao salvar:', err);
+                // Proceed to success screen anyway for UX
+                currentStep++;
+                renderStep();
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        btnNext.addEventListener('click', () => {
+            console.log('Botão Próximo clicado! currentStep:', currentStep);
+
+            // Tela de seleção de profissionais
+            if (currentStep === -2) {
+                console.log('Estamos na tela de seleção');
+                console.log('Unidade:', answers.unidade);
+                console.log('Profissional ID:', answers.profissional_id);
+
+                if (answers.unidade && answers.profissional_id) {
+                    console.log('✅ Validação OK! Avançando...');
+                    currentStep++;
+                    renderStep();
+                } else {
+                    console.log('❌ Validação falhou!');
+                }
+                return;
+            }
+
+            const question = questions[currentStep];
+
+            // Validation
+            if (currentStep >= 0 && currentStep < questions.length) {
+                const val = question.key ? answers[question.key] : answers.respostas[question.id];
+                if (!val || val.trim() === '') {
+                    const input = document.getElementById('step-input');
+                    if (input) {
+                        input.classList.add('border-red-300');
+                        setTimeout(() => input.classList.remove('border-red-300'), 500);
+                    }
+                    // For choice questions, just don't advance
+                    if (question.type === 'choice' && !answers.respostas[question.id]) return;
+                    // For text inputs, don't advance if empty
+                    if ((question.type === 'text' || question.type === 'textarea') && (!val || val.trim() === '')) return;
+                }
+            }
+
+            // Sempre avançar (última pergunta vai para revisão, não submete direto)
+            currentStep++;
+            renderStep();
+        });
+
+        btnPrev.addEventListener('click', () => {
+            console.log('Botão Anterior clicado! currentStep:', currentStep);
+            if (currentStep >= -1) {
+                currentStep--;
+                renderStep();
+            }
+        });
+
+        // Initialize
+        async function init() {
+            if (supabaseClient) {
+                await loadProfissionais();
+            }
+            renderStep();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Sensus | Admin - Bertuol Odontologia</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'turquoise': '#2BBEC3',
+                        'bertuol-yellow': '#ECC236',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .anamnese-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #e5e7eb;
+        }
+
+        .anamnese-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .anamnese-card.unread {
+            border-left-color: #ECC236;
+        }
+
+        .btn-primary {
+            background: #2BBEC3;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #218e8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(43, 190, 195, 0.3);
+        }
+
+        .btn-secondary {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .btn-secondary:hover {
+            background: #059669;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            max-width: 48rem;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .badge {
+            background: #ECC236;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-turquoise to-[#218e8d] text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold font-title">Dashboard Sensus</h1>
+                    <p class="text-sm opacity-90">Diagnóstico de Sensações e Perspectivas - Bertuol Odontologia</p>
+                </div>
+                <button onclick="window.location.href='/'" class="btn-primary">
+                    ← Voltar ao Sensus
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <p class="text-white/90 text-sm mb-1">Total de Perfis</p>
+                    <p class="text-4xl font-bold" id="stat-total">0</p>
+                </div>
+                <div class="bg-bertuol-yellow/30 backdrop-blur-sm rounded-xl p-4">
+                    <p class="text-white/90 text-sm mb-1">Não Lidos</p>
+                    <p class="text-4xl font-bold" id="stat-unread">0</p>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <p class="text-white/90 text-sm mb-1">Lidos</p>
+                    <p class="text-4xl font-bold" id="stat-read">0</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filtro -->
+        <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap items-center gap-4">
+            <label class="font-semibold text-gray-700">Filtrar por Unidade:</label>
+            <select id="filter-unidade" class="flex-1 md:flex-initial px-4 py-2 border-2 border-gray-200 rounded-lg
+                   focus:border-turquoise focus:outline-none">
+                <option value="todas">Todas as Unidades</option>
+            </select>
+            <button onclick="loadData()" class="btn-primary ml-auto">
+                🔄 Atualizar
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-turquoise"></div>
+            <p class="text-gray-500 mt-4">Carregando registros...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty" class="hidden text-center py-20">
+            <p class="text-gray-500 text-lg">Nenhum registro encontrado</p>
+        </div>
+
+        <!-- Grid -->
+        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="bg-gradient-to-r from-turquoise to-[#218e8d] text-white p-6 rounded-t-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-2xl font-bold font-title" id="modal-nome"></h2>
+                        <p class="text-sm opacity-90" id="modal-info"></p>
+                    </div>
+                    <button onclick="closeModal()" class="text-2xl hover:bg-white/20 rounded-full w-8 h-8">×</button>
+                </div>
+            </div>
+            <div class="p-6" id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'VITE_SUPABASE_URL_PLACEHOLDER';
+        const SUPABASE_ANON_KEY = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
+
+        const supabaseAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const PERGUNTAS = {
+            1: 'Como você gosta de ser chamado(a)?',
+            2: 'O que fez você escolher a Bertuol?',
+            3: 'Se seu sorriso contasse uma história hoje, o que ele diria?',
+            4: 'Como você se sente em ambientes de saúde?',
+            5: 'Existe alguma experiência do passado que influencia como você se sente hoje?',
+            6: 'O que te faria sair daqui hoje se sentindo cuidado(a) de verdade?',
+            7: 'O que mais te dá orgulho em você?',
+            8: 'Quando você imagina seu sorriso ideal, o que muda na sua vida?',
+            9: 'O que te deixa mais confortável no atendimento?',
+            10: 'Como é um dia bom para você?',
+            11: 'O que você gosta de fazer para se sentir bem?',
+            12: 'Se pudéssemos escolher uma música para tocar agora, qual seria?',
+            13: 'O que mais te deixa inseguro(a) em tratamentos de saúde?',
+            14: 'Como prefere que a gente se comunique com você?',
+            15: 'Algo que quase ninguém pergunta, mas que você gostaria que soubéssemos?'
+        };
+
+        let allRecords = [];
+        let currentFilter = 'todas';
+
+        async function loadData() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('grid').classList.add('hidden');
+            document.getElementById('empty').classList.add('hidden');
+
+            try {
+                console.log('=== INICIANDO CARGA DE DADOS ===');
+                console.log('Supabase URL:', SUPABASE_URL);
+                console.log('Supabase Client:', supabaseAdmin);
+
+                // Verificar se Supabase foi inicializado
+                if (!supabaseAdmin) {
+                    throw new Error('Supabase client não foi inicializado');
+                }
+
+                const { data, error } = await supabaseAdmin
+                    .from('anamnese_humanizada')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                console.log('Resposta Supabase:', { data, error });
+
+                if (error) {
+                    console.error('=== ERRO DO SUPABASE ===');
+                    console.error('Código:', error.code);
+                    console.error('Mensagem:', error.message);
+                    console.error('Detalhes:', error.details);
+                    console.error('Hint:', error.hint);
+                    throw error;
+                }
+
+                console.log('✅ Registros encontrados:', data?.length || 0);
+
+                allRecords = data || [];
+                updateUnidades();
+                updateStats();
+                renderGrid();
+            } catch (error) {
+                console.error('❌ ERRO AO CARREGAR DADOS:', error);
+
+                document.getElementById('empty').classList.remove('hidden');
+                document.getElementById('empty').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-500 text-lg font-semibold mb-2">❌ Erro ao carregar dados</p>
+                        <p class="text-gray-600 text-sm mb-4">${error.message || 'Erro desconhecido'}</p>
+                        <button onclick="loadData()" class="px-6 py-2 bg-turquoise text-white rounded-lg hover:bg-turquoise/90">
+                            🔄 Tentar Novamente
+                        </button>
+                        <details class="mt-4 text-left max-w-2xl mx-auto">
+                            <summary class="cursor-pointer text-sm text-gray-500">Ver detalhes técnicos</summary>
+                            <pre class="bg-gray-100 p-4 rounded mt-2 text-xs overflow-auto">${JSON.stringify(error, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function updateUnidades() {
+            console.log('updateUnidades chamada, total de registros:', allRecords.length);
+            const unidades = [...new Set(allRecords
+                .map(r => r.unidade)
+                .filter(u => u && u !== null && u !== undefined && u !== '')
+            )];
+            console.log('Unidades encontradas:', unidades);
+
+            const select = document.getElementById('filter-unidade');
+            if (!select) {
+                console.error('Elemento filter-unidade não encontrado!');
+                return;
+            }
+
+            select.innerHTML = '<option value="todas">Todas as Unidades</option>';
+            unidades.forEach(u => {
+                select.innerHTML += `<option value="${u}">${u}</option>`;
+            });
+        }
+
+        function updateStats() {
+            console.log('updateStats chamada');
+            const filtered = getFilteredRecords();
+            console.log('Registros filtrados:', filtered.length);
+            const unread = filtered.filter(r => !r.lido_pelo_dentista).length;
+
+            document.getElementById('stat-total').textContent = filtered.length;
+            document.getElementById('stat-unread').textContent = unread;
+            document.getElementById('stat-read').textContent = filtered.length - unread;
+            console.log('Stats atualizadas: Total=', filtered.length, 'Não lidos=', unread);
+        }
+
+        function getFilteredRecords() {
+            if (currentFilter === 'todas') return allRecords;
+            return allRecords.filter(r => r.unidade === currentFilter);
+        }
+
+        function renderGrid() {
+            const records = getFilteredRecords();
+            const grid = document.getElementById('grid');
+
+            console.log('Renderizando grid com', records.length, 'registros');
+            console.log('Primeiro registro:', records[0]);
+
+            if (records.length === 0) {
+                document.getElementById('empty').classList.remove('hidden');
+                return;
+            }
+
+            grid.innerHTML = records.map(record => `
+                <div class="anamnese-card ${!record.lido_pelo_dentista ? 'unread' : ''}" 
+                     onclick="openModal(${record.id})">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">${record.paciente_nome || 'Sem nome'}</h3>
+                            <p class="text-sm text-gray-500">${record.unidade || 'Sem unidade'}</p>
+                        </div>
+                        ${!record.lido_pelo_dentista ? '<span class="badge">Novo</span>' : ''}
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4">
+                        ${new Date(record.created_at).toLocaleString('pt-BR')}
+                    </p>
+                    <div class="flex gap-2">
+                        <button onclick="event.stopPropagation(); openModal(${record.id})" 
+                                class="flex-1 btn-primary text-sm py-2">
+                            👁️ Ver Perfil Emocional
+                        </button>
+                        ${!record.lido_pelo_dentista ? `
+                            <button onclick="event.stopPropagation(); marcarLido(${record.id})" 
+                                    class="btn-secondary">
+                                ✓ Lido
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            grid.classList.remove('hidden');
+            console.log('✅ Grid renderizado com sucesso!');
+        }
+
+        function openModal(id) {
+            const record = allRecords.find(r => r.id === id);
+            if (!record) return;
+
+            document.getElementById('modal-nome').textContent = record.paciente_nome;
+            document.getElementById('modal-info').textContent =
+                `${new Date(record.created_at).toLocaleString('pt-BR')} • ${record.unidade} • Dr(a). ${record.dentista_nome || 'N/A'}`;
+
+            const body = document.getElementById('modal-body');
+
+            // Informações do atendimento
+            let html = `
+                <div class="bg-slate-50 p-4 rounded-lg mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-2">Informações do Atendimento</h3>
+                    <p class="text-sm text-gray-600"><strong>Unidade:</strong> ${record.unidade || 'N/A'}</p>
+                    <p class="text-sm text-gray-600"><strong>Dentista:</strong> ${record.dentista_nome || 'N/A'}</p>
+                    <p class="text-sm text-gray-600"><strong>ID Profissional:</strong> ${record.profissional_id || 'N/A'}</p>
+                </div>
+                <h3 class="font-semibold text-gray-700 mb-4">Diagnóstico de Sensações</h3>
+            `;
+
+            // Adicionar respostas
+            html += Object.entries(record.respostas || {}).map(([key, value]) => {
+                const pergunta = PERGUNTAS[key] || `Pergunta ${key}`;
+                return `
+                    <div class="border-l-4 border-turquoise pl-4 mb-6">
+                        <p class="text-sm font-semibold text-gray-600 mb-1">${key}. ${pergunta}</p>
+                        <p class="text-base text-gray-800">${value || '(Não respondido)'}</p>
+                    </div>
+                `;
+            }).join('');
+
+            body.innerHTML = html;
+
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        async function marcarLido(id) {
+            try {
+                const { error } = await supabaseAdmin
+                    .from('anamnese_humanizada')
+                    .update({ lido_pelo_dentista: true })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                loadData();
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao marcar como lido');
+            }
+        }
+
+        document.getElementById('filter-unidade').addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            updateStats();
+            renderGrid();
+        });
+
+        // Close modal on background click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') closeModal();
+        });
+
+        // Load data on start
+        loadData();
+    </script>
+</body>
+
+</html>
