@@ -9,11 +9,12 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Substituir placeholders pelos valores reais passados via ARG
-RUN sed -i "s|VITE_SUPABASE_URL_PLACEHOLDER|$VITE_SUPABASE_URL|g" index.html admin.html && \
-    sed -i "s|VITE_SUPABASE_ANON_KEY_PLACEHOLDER|$VITE_SUPABASE_ANON_KEY|g" index.html admin.html
-
 RUN npm run build
+
+# Substituir placeholders nos arquivos gerados (HTML e JS)
+RUN find dist -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i "s|VITE_SUPABASE_URL_PLACEHOLDER|$VITE_SUPABASE_URL|g" {} + && \
+    find dist -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i "s|VITE_SUPABASE_ANON_KEY_PLACEHOLDER|$VITE_SUPABASE_ANON_KEY|g" {} +
+
 
 # Estágio de produção com Nginx
 FROM nginx:stable-alpine as production-stage
