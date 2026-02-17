@@ -197,24 +197,20 @@
         function getSupabase() {
             if (supabaseClient) return supabaseClient;
 
-            const url = 'VITE_SUPABASE_URL_PLACEHOLDER';
-            const key = 'VITE_SUPABASE_ANON_KEY_PLACEHOLDER';
-
-            console.log('--- SUPABASE CHECK ---');
-            console.log('URL Placeholder active:', url === 'VITE_SUPABASE_URL_PLACEHOLDER');
-
-            if (!url || url.includes('PLACEHOLDER')) {
-                console.error('⚠️ Supabase URL no definida o todavía tiene o placeholder!');
+            console.log('--- CONEXÃO SUPABASE ---');
+            if (SUPABASE_URL.includes('PLACEHOLDER')) {
+                console.error('❌ ERRO: Chaves do banco não foram injetadas no deploy!');
                 return null;
             }
 
             try {
                 if (window.supabase) {
-                    supabaseClient = window.supabase.createClient(url, key);
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('✅ Cliente Supabase inicializado.');
                     return supabaseClient;
                 }
             } catch (e) {
-                console.error('Erro ao inicializar Supabase:', e);
+                console.error('❌ Erro na inicialização:', e);
             }
             return null;
         }
@@ -239,13 +235,9 @@
         async function loadProfissionais() {
             try {
                 const client = getSupabase();
-                if (!client) {
-                    console.warn('Usando dados de profissionais locais...');
-                    setFallbackData();
-                    return;
-                }
+                if (!client) return;
 
-                console.log('Buscando profissionais do banco...');
+                console.log('Buscando dados reais do banco...');
                 const { data, error } = await client
                     .from('profissionais')
                     .select('*')
@@ -253,36 +245,17 @@
                     .order('Unidade', { ascending: true });
 
                 if (error) {
-                    console.error('Erro ao buscar profissionais:', error);
-                    setFallbackData();
+                    console.error('Erro Supabase:', error);
                     return;
                 }
 
-                if (!data || data.length === 0) {
-                    console.warn('Banco retornou lista vazia de profissionais.');
-                    setFallbackData();
-                } else {
-                    profissionaisData = data;
-                    unidadesDisponiveis = [...new Set(data.map(p => p.Unidade))];
-                    console.log('Profissionais carregados do banco:', profissionaisData.length);
-                }
+                profissionaisData = data || [];
+                unidadesDisponiveis = [...new Set(profissionaisData.map(p => p.Unidade))];
+                console.log('Dados carregados:', profissionaisData.length, 'profissionais.');
 
             } catch (e) {
-                console.error('Exceção ao carregar profissionais:', e);
-                setFallbackData();
+                console.error('Exceção ao carregar:', e);
             }
-        }
-
-        function setFallbackData() {
-            // Dados de fallback caso o banco falhe
-            profissionaisData = [
-                { id: 101, Nome: "Claudio Borba", Unidade: "Palmas - TO" },
-                { id: 102, Nome: "Andressa Marinho", Unidade: "Palmas - TO" },
-                { id: 103, Nome: "Dra. Ana Paula", Unidade: "Canoas" },
-                { id: 104, Nome: "Dr. Roberto", Unidade: "Canoas" }
-            ];
-            unidadesDisponiveis = [...new Set(profissionaisData.map(p => p.Unidade))];
-            console.log('Dados de fallback aplicados.');
         }
 
         const questions = [
