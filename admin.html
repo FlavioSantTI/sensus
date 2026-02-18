@@ -132,36 +132,137 @@
             font-size: 0.75rem;
             font-weight: 700;
         }
+
+        /* REDESIGN PREMIUM DO MODAL */
+        .modal-content {
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header-premium {
+            background: linear-gradient(135deg, #2BBEC3 0%, #218e8d 100%);
+            padding: 2rem;
+            color: white;
+            position: relative;
+        }
+
+        .ai-analysis-card {
+            background: rgba(43, 190, 195, 0.03);
+            border: 1px solid rgba(43, 190, 195, 0.1);
+            border-left: 6px solid #2BBEC3;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .questionnaire-section {
+            padding: 2rem;
+        }
+
+        .q-card-premium {
+            background: #fdfdfd;
+            border: 1px solid #f1f5f9;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .q-card-premium:hover {
+            border-color: #2BBEC3;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .topic-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #edf2f7;
+            cursor: pointer;
+            font-weight: 700;
+            color: #334155;
+            transition: all 0.2s;
+        }
+
+        .topic-toggle:hover {
+            background: #f1f5f9;
+        }
+
+        .topic-content-wrapper {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .topic-content-wrapper.active {
+            max-height: 2500px;
+        }
+
+        .btn-close-modal {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-close-modal:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
     </style>
 </head>
 
-<body>
+<body class="bg-[#E5F6F8]">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-turquoise to-[#218e8d] text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-3xl font-bold font-title">Dashboard Sensus</h1>
-                    <p class="text-sm opacity-90">Diagnóstico de Sensações e Perspectivas - Bertuol Odontologia</p>
+    <header class="bg-[#E5F6F8] text-slate-800 shadow-sm border-b-4 border-[#ECC236]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="/logo-bertuol.png" alt="Bertuol Odontologia" class="h-10">
+                    <div>
+                        <h1 class="text-xl font-bold font-title leading-tight">Dashboard Sensus</h1>
+                        <p class="text-xs opacity-75">Diagnóstico de Sensações e Perspectivas <span class="opacity-50">•
+                                v1.0.0</span></p>
+                    </div>
                 </div>
-                <button onclick="window.location.href='/'" class="btn-primary">
+                <button onclick="window.location.href='/'"
+                    class="text-sm font-medium text-turquoise hover:text-[#218e8d] transition-colors">
                     ← Voltar ao Sensus
                 </button>
             </div>
 
             <!-- Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-                    <p class="text-white/90 text-sm mb-1">Total de Perfis</p>
-                    <p class="text-4xl font-bold" id="stat-total">0</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="bg-[#ECC236] rounded-xl p-3 border border-white/20 shadow-sm">
+                    <p class="text-white/90 text-xs mb-1 font-medium">Total de Perfis</p>
+                    <p class="text-2xl font-bold text-white" id="stat-total">0</p>
                 </div>
-                <div class="bg-bertuol-yellow/30 backdrop-blur-sm rounded-xl p-4">
-                    <p class="text-white/90 text-sm mb-1">Não Lidos</p>
-                    <p class="text-4xl font-bold" id="stat-unread">0</p>
+                <div class="bg-[#ECC236] rounded-xl p-3 border border-white/20 relative overflow-hidden shadow-sm">
+                    <div class="absolute right-0 top-0 w-16 h-full bg-gradient-to-l from-white/20 to-transparent">
+                    </div>
+                    <p class="text-white/90 text-xs mb-1 font-medium">Não Lidos</p>
+                    <p class="text-2xl font-bold text-white relative z-10" id="stat-unread">0</p>
                 </div>
-                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-                    <p class="text-white/90 text-sm mb-1">Lidos</p>
-                    <p class="text-4xl font-bold" id="stat-read">0</p>
+                <div class="bg-[#ECC236] rounded-xl p-3 border border-white/20 shadow-sm">
+                    <p class="text-white/90 text-xs mb-1 font-medium">Lidos</p>
+                    <p class="text-2xl font-bold text-white" id="stat-read">0</p>
                 </div>
             </div>
         </div>
@@ -196,19 +297,72 @@
         <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
     </main>
 
-    <!-- Modal -->
+    <!-- Modal Premium Redesign -->
     <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="bg-gradient-to-r from-turquoise to-[#218e8d] text-white p-6 rounded-t-xl">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h2 class="text-2xl font-bold font-title" id="modal-nome"></h2>
-                        <p class="text-sm opacity-90" id="modal-info"></p>
+        <div class="modal-content !max-w-4xl !h-[85vh] md:!h-auto">
+            <!-- Header Moderno -->
+            <div class="modal-header-premium">
+                <div class="btn-close-modal" onclick="closeModal()">
+                    <span class="text-white text-xl">✕</span>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div
+                        class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+                        👤
                     </div>
-                    <button onclick="closeModal()" class="text-2xl hover:bg-white/20 rounded-full w-8 h-8">×</button>
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold font-title leading-tight" id="modal-nome">Carregando...</h2>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/80 mt-1">
+                            <span id="modal-date" class="flex items-center gap-1"></span>
+                            <span id="modal-unidade" class="flex items-center gap-1"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="p-6" id="modal-body"></div>
+
+            <!-- Corpo do Modal com Scroll Customizado -->
+            <div class="overflow-y-auto flex-1 bg-white scrollbar-thin scrollbar-thumb-slate-200">
+                <!-- Seção IA - Destaque -->
+                <div class="topic-toggle" onclick="toggleSection('ai-section')">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 bg-bertuol-yellow/10 rounded-lg flex items-center justify-center text-[#ECC236]">
+                            ✨</div>
+                        <span class="text-base font-bold">Análise Estratégica IA</span>
+                    </div>
+                    <span id="ai-section-icon" class="transition-transform duration-300 text-slate-400">▼</span>
+                </div>
+                <div id="ai-section" class="topic-content-wrapper active bg-slate-50/30">
+                    <div class="p-6 md:p-8">
+                        <div id="ai-body-content"></div>
+                    </div>
+                </div>
+
+                <!-- Seção Questionário - Grid -->
+                <div class="topic-toggle" onclick="toggleSection('survey-section')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-turquoise/10 rounded-lg flex items-center justify-center text-turquoise">
+                            📝</div>
+                        <span class="text-base font-bold">Prontuário de Sensações</span>
+                    </div>
+                    <span id="survey-section-icon" class="transition-transform duration-300 text-slate-400">▼</span>
+                </div>
+                <div id="survey-section" class="topic-content-wrapper bg-white">
+                    <div class="p-6 md:p-8">
+                        <div id="survey-body-content" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Elegante -->
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sensus Admin v1.0.0 • Bertuol
+                    Odontologia</p>
+                <button onclick="closeModal()"
+                    class="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-95">
+                    Concluir Revisão
+                </button>
+            </div>
         </div>
     </div>
 
@@ -362,17 +516,22 @@
             const records = getFilteredRecords();
             const grid = document.getElementById('grid');
 
-            console.log('Renderizando grid com', records.length, 'registros');
-            console.log('Primeiro registro:', records[0]);
+            console.log('--- RENDER GRID ---');
+            console.log('Total de registros:', records.length);
 
             if (records.length === 0) {
+                grid.innerHTML = '';
                 document.getElementById('empty').classList.remove('hidden');
+                grid.classList.add('hidden');
                 return;
             }
 
+            document.getElementById('empty').classList.add('hidden');
+            grid.classList.remove('hidden');
+
             grid.innerHTML = records.map(record => `
                 <div class="anamnese-card ${!record.lido_pelo_dentista ? 'unread' : ''}" 
-                     onclick="openModal(${record.id})">
+                     onclick="openModal('${record.id}')">
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <h3 class="text-lg font-bold text-gray-800">${record.paciente_nome || 'Sem nome'}</h3>
@@ -383,14 +542,14 @@
                     <p class="text-xs text-gray-400 mb-4">
                         ${new Date(record.created_at).toLocaleString('pt-BR')}
                     </p>
-                    <div class="flex gap-2">
-                        <button onclick="event.stopPropagation(); openModal(${record.id})" 
-                                class="flex-1 btn-primary text-sm py-2">
-                            👁️ Ver Perfil Emocional
+                    <div class="flex gap-2 font-sans">
+                        <button onclick="event.stopPropagation(); openModal('${record.id}')" 
+                                class="flex-1 btn-primary text-sm py-2 rounded-lg flex items-center justify-center gap-2">
+                            <span>👁️</span> Ver Perfil Emocional
                         </button>
                         ${!record.lido_pelo_dentista ? `
-                            <button onclick="event.stopPropagation(); marcarLido(${record.id})" 
-                                    class="btn-secondary">
+                            <button onclick="event.stopPropagation(); marcarLido('${record.id}')" 
+                                    class="btn-secondary rounded-lg px-4">
                                 ✓ Lido
                             </button>
                         ` : ''}
@@ -398,59 +557,92 @@
                 </div>
             `).join('');
 
-            grid.classList.remove('hidden');
-            console.log('✅ Grid renderizado com sucesso!');
+            console.log('✅ Grid renderizado.');
         }
 
         function openModal(id) {
-            console.log('Abrindo modal para ID:', id);
-            const record = allRecords.find(r => r.id === id);
-            if (!record) {
-                console.error('Registro não encontrado para ID:', id);
-                return;
-            }
+            const record = allRecords.find(r => String(r.id) === String(id));
+            if (!record) return;
 
-            document.getElementById('modal-nome').textContent = record.paciente_nome || 'Sem Nome';
-            document.getElementById('modal-info').textContent =
-                `${new Date(record.created_at).toLocaleString('pt-BR')} • ${record.unidade || 'N/A'} • Dr(a). ${record.dentista_nome || 'N/A'}`;
+            document.getElementById('modal-nome').textContent = record.paciente_nome || 'Paciente';
+            document.getElementById('modal-date').innerHTML = `📅 ${new Date(record.created_at).toLocaleString('pt-BR')}`;
+            document.getElementById('modal-unidade').innerHTML = `📍 ${record.unidade || 'N/A'}`;
 
-            const body = document.getElementById('modal-body');
+            // Renderizar Conteúdos
+            renderAISection(record);
+            renderSurveySection(record);
 
-            // Informações do atendimento
-            let html = `
-                <div class="bg-slate-50 p-4 rounded-lg mb-6">
-                    <h3 class="font-semibold text-gray-700 mb-2 font-title">Informações do Atendimento</h3>
-                    <p class="text-sm text-gray-600"><strong>Unidade:</strong> ${record.unidade || 'N/A'}</p>
-                    <p class="text-sm text-gray-600"><strong>Dentista:</strong> ${record.dentista_nome || 'N/A'}</p>
-                    <p class="text-sm text-gray-600"><strong>Origem:</strong> ${record.fluxo_origem || 'Tablet Recepção'}</p>
-                </div>
-                <h3 class="font-semibold text-gray-700 mb-4 font-title">Diagnóstico de Sensações</h3>
-            `;
-
-            // Adicionar respostas
-            const respostas = record.respostas || {};
-            html += Object.entries(PERGUNTAS).map(([key, pergunta]) => {
-                const resposta = respostas[key];
-                return `
-                    <div class="border-l-4 border-turquoise pl-4 mb-6">
-                        <p class="text-sm font-semibold text-gray-600 mb-1">${key}. ${pergunta}</p>
-                        <p class="text-base text-gray-800">${resposta || '<span class="text-gray-400 italic">(Não respondido)</span>'}</p>
-                    </div>
-                `;
-            }).join('');
-
-            body.innerHTML = html;
+            // Resetar Abas (IA aberta por padrão)
+            document.getElementById('ai-section').classList.add('active');
+            document.getElementById('ai-section-icon').style.transform = 'rotate(180deg)';
+            document.getElementById('survey-section').classList.remove('active');
+            document.getElementById('survey-section-icon').style.transform = 'rotate(0deg)';
 
             const modal = document.getElementById('modal');
             modal.style.display = 'flex';
             modal.classList.add('active');
-            console.log('✅ Modal exibido!');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function renderAISection(record) {
+            const content = record.analise_ia;
+            const container = document.getElementById('ai-body-content');
+
+            if (!content) {
+                container.innerHTML = `
+                    <div class="bg-slate-50 border border-dashed border-slate-300 p-8 rounded-2xl text-center">
+                        <p class="text-slate-400 italic">Análise de IA ainda não processada para este perfil.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="ai-analysis-card">
+                    <p class="text-xs font-bold text-turquoise uppercase tracking-widest mb-4">Relatório Bertuol IA</p>
+                    <div class="text-slate-700 text-lg leading-relaxed whitespace-pre-wrap font-sans">
+                        ${content}
+                    </div>
+                </div>`;
+        }
+
+        function renderSurveySection(record) {
+            const respostas = record.respostas || {};
+            const container = document.getElementById('survey-body-content');
+
+            container.innerHTML = Object.entries(PERGUNTAS).map(([num, questao]) => `
+                <div class="q-card-premium">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-6 h-6 bg-slate-100 rounded text-[10px] flex items-center justify-center font-bold text-slate-500">
+                            ${num}
+                        </span>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Pergunta</p>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700 mb-4 leading-snug">${questao}</p>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm min-h-[60px]">
+                        <p class="text-base text-slate-600">${respostas[num] || '<span class="text-slate-300 italic">Mensagem não preenchida</span>'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+
+            if (section.classList.contains('active')) {
+                section.classList.remove('active');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                section.classList.add('active');
+                icon.style.transform = 'rotate(180deg)';
+            }
         }
 
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.style.display = 'none';
             modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         async function marcarLido(id) {

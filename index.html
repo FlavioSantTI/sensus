@@ -184,6 +184,11 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Version -->
+            <div class="text-center mt-4">
+                <p class="text-[9px] text-slate-300 font-semibold tracking-widest">SENSUS v1.0.0</p>
+            </div>
         </footer>
 
     </main>
@@ -227,7 +232,7 @@
         let unidadesDisponiveis = [];
 
         // --- STATE ---
-        let currentStep = -2; // -2: Seleção Unidade/Dentista, -1: Welcome, 0-14: Questions, 15: Review, 16: Success
+        let currentStep = -2; // -2: Seleção Unidade/Dentista, -1: Welcome, 'nome_completo': Nome Completo, 0-14: Questions, 15: Review, 16: Success
         const totalQuestions = 15;
         const answers = {
             paciente_nome: '',
@@ -266,7 +271,7 @@
         }
 
         const questions = [
-            { id: 1, type: 'text', q: 'Como você gosta de ser chamado(a)?', key: 'paciente_nome', placeholder: 'Seu nome ou apelido...' },
+            { id: 1, type: 'textarea', q: 'Como você gosta de ser chamado(a)?', placeholder: 'Pode ser um apelido, nome ou como preferir!' },
             {
                 id: 2,
                 type: 'choice',
@@ -328,6 +333,8 @@
                     renderSelecaoProfissional();
                 } else if (currentStep === -1) {
                     renderWelcome();
+                } else if (currentStep === 'nome_completo') {
+                    renderNomeCompleto();
                 } else if (currentStep === questions.length) {
                     renderReview();
                 } else if (currentStep > questions.length) {
@@ -488,6 +495,57 @@
             navControls.style.justifyContent = 'space-between';
 
             progressWrapper.classList.add('hidden');
+        }
+
+        function renderNomeCompleto() {
+            const nomeAtual = answers.paciente_nome || '';
+
+            contentDiv.innerHTML = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <div class="text-5xl mb-4">📝</div>
+                        <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2 tracking-tight font-title">Primeiro, nos conte seu nome completo</h2>
+                        <p class="text-slate-500 text-base">Para que possamos identificar você no sistema</p>
+                    </div>
+                    
+                    <div class="max-w-md mx-auto">
+                        <textarea 
+                            id="input-nome-completo"
+                            class="w-full px-5 py-4 border-2 border-slate-200 rounded-2xl focus:border-turquoise focus:outline-none transition-colors resize-none text-lg"
+                            placeholder="Digite seu nome completo..."
+                            rows="2"
+                        >${nomeAtual}</textarea>
+                    </div>
+                </div>
+            `;
+
+            // Configurar botões
+            btnNext.innerText = 'Continuar';
+            btnPrev.classList.remove('invisible');
+            btnPrev.classList.remove('hidden');
+            btnPrev.innerText = 'Voltar';
+
+            // Resetar layout
+            const navControls = document.getElementById('navigation-controls');
+            navControls.style.justifyContent = 'space-between';
+            progressWrapper.classList.add('hidden');
+
+            // Validar ao digitar
+            setTimeout(() => {
+                const input = document.getElementById('input-nome-completo');
+                if (input) {
+                    input.focus();
+                    input.addEventListener('input', (e) => {
+                        answers.paciente_nome = e.target.value.trim();
+                        btnNext.disabled = !answers.paciente_nome;
+                        btnNext.style.opacity = answers.paciente_nome ? '1' : '0.5';
+                    });
+
+                    // Validar estado inicial
+                    btnNext.disabled = !nomeAtual;
+                    btnNext.style.opacity = nomeAtual ? '1' : '0.5';
+                }
+            }, 100);
         }
 
         function renderQuestion(question) {
@@ -742,6 +800,16 @@
                 return;
             }
 
+            // Validação da tela de nome completo
+            if (currentStep === 'nome_completo') {
+                if (!answers.paciente_nome || answers.paciente_nome.trim() === '') {
+                    return; // Não avança se nome vazio
+                }
+                currentStep = 0; // Vai para primeira pergunta
+                renderStep();
+                return;
+            }
+
             const question = questions[currentStep];
 
             // Validation
@@ -760,14 +828,18 @@
                 }
             }
 
-            // Sempre avançar (última pergunta vai para revisão, não submete direto)
-            currentStep++;
+            // Lógica especial para step -1 (Welcome) -> nome_completo
+            if (currentStep === -1) {
+                currentStep = 'nome_completo';
+            } else {
+                currentStep++;
+            }
             renderStep();
         });
 
         btnPrev.addEventListener('click', () => {
             console.log('Botão Anterior clicado! currentStep:', currentStep);
-            if (currentStep >= -1) {
+            if (currentStep >= -2 && currentStep !== -2) {
                 currentStep--;
                 renderStep();
             }
